@@ -2,6 +2,7 @@ import torch.nn as nn
 
 class firstOctConv(nn.Module):
     def __init__(self, settings, ch_in, ch_out, kernel=(1,1), pad=(0,0), stride=(1,1)):
+        super(firstOctConv, self).__init__()
         self.stride = stride
         _, alpha_out = settings
         
@@ -28,6 +29,7 @@ class firstOctConv(nn.Module):
 
 class lastOctConv(nn.Module):
     def __init__(self, settings, ch_in, ch_out, kernel=(1,1), pad=(0,0), stride=(1,1)):
+        super(lastOctConv, self).__init__()
         self.stride = stride
         alpha_in, alpha_out = settings
         hf_ch_in = int(ch_in * (1 - alpha_in))
@@ -52,6 +54,7 @@ class lastOctConv(nn.Module):
 
 class OctConv(nn.Module):
     def __init__(self, settings, ch_in, ch_out, kernel=(1,1), pad=(0,0), stride=(1,1)):
+        super(OctConv, self).__init__()
         self.stride = stride
         alpha_in, alpha_out = settings
         hf_ch_in = int(ch_in * (1 - alpha_in))
@@ -101,6 +104,7 @@ class OctConv(nn.Module):
 
 class firstOctConv_BN_AC(nn.Module):
     def __init__(self, alpha, num_filter_in, num_filter_out, kernel, pad, stride=(1,1), num_group=1):
+        super(firstOctConv_BN_AC, self).__init__()
         self.conv = firstOctConv(settings=(0, alpha), ch_in=num_filter_in, ch_out=num_filter_out, kernel=kernel, pad=pad, stride=stride)
         self.hf_bn = nn.BatchNorm2d(self.conv.hf_ch_out)
         self.lf_bn = nn.BatchNorm2d(self.conv.lf_ch_out)
@@ -116,6 +120,7 @@ class firstOctConv_BN_AC(nn.Module):
 
 class lastOctConv_BN_AC(nn.Module):
     def __init__(self, alpha, num_filter_in, num_filter_out, kernel, pad, stride=(1,1), num_group=1):
+        super(lastOctConv_BN_AC, self).__init__()
         self.conv = lastOctConv(settings=(alpha, 0), ch_in=num_filter_in, ch_out=num_filter_out, kernel=kernel, pad=pad, stride=stride)
         self.bn = nn.BatchNorm2d(self.conv.hf_ch_out)
         self.relu = nn.ReLU(inplace=True)
@@ -129,6 +134,7 @@ class lastOctConv_BN_AC(nn.Module):
 
 class octConv_BN_AC(nn.Module):
     def __init__(self, alpha, num_filter_in, num_filter_out, kernel, pad, stride=(1,1), num_group=1):
+        super(octConv_BN_AC, self).__init__()
         self.conv = OctConv(settings=(alpha, alpha), ch_in=num_filter_in, ch_out=num_filter_out, kernel=kernel, pad=pad, stride=stride)
         self.hf_bn = nn.BatchNorm2d(self.conv.hf_ch_out)
         self.lf_bn = nn.BatchNorm2d(self.conv.lf_ch_out)
@@ -145,6 +151,7 @@ class octConv_BN_AC(nn.Module):
 
 class firstOctConv_BN(nn.Module):
     def __init__(self, alpha, num_filter_in, num_filter_out, kernel, pad, stride=(1,1), num_group=1):
+        super(firstOctConv_BN, self).__init__()
         self.conv = firstOctConv(settings=(0, alpha), ch_in=num_filter_in, ch_out=num_filter_out, kernel=kernel, pad=pad, stride=stride)
         self.hf_bn = nn.BatchNorm2d(self.conv.hf_ch_out)
         self.lf_bn = nn.BatchNorm2d(self.conv.lf_ch_out)
@@ -158,6 +165,7 @@ class firstOctConv_BN(nn.Module):
 
 class lastOctConv_BN(nn.Module):
     def __init__(self, alpha, num_filter_in, num_filter_out, kernel, pad, stride=(1,1), num_group=1):
+        super(lastOctConv_BN, self).__init__()
         self.conv = lastOctConv(settings=(alpha, 0), ch_in=num_filter_in, ch_out=num_filter_out, kernel=kernel, pad=pad, stride=stride)
         self.bn = nn.BatchNorm2d(self.conv.hf_ch_out)
 
@@ -168,6 +176,7 @@ class lastOctConv_BN(nn.Module):
 
 class octConv_BN(nn.Module):
     def __init__(self, alpha, num_filter_in, num_filter_out, kernel, pad, stride=(1,1), num_group=1):
+        super(octConv_BN, self).__init__()
         self.conv = OctConv(settings=(alpha, alpha), ch_in=num_filter_in, ch_out=num_filter_out, kernel=kernel, pad=pad, stride=stride)
         self.hf_bn = nn.BatchNorm2d(self.conv.hf_ch_out)
         self.lf_bn = nn.BatchNorm2d(self.conv.lf_ch_out)
@@ -180,6 +189,7 @@ class octConv_BN(nn.Module):
 
 class Conv_BN(nn.Module):
     def __init__(self, num_filter_in, num_filter_out, kernel, pad, stride=(1,1)):
+        super(Conv_BN, self).__init__()
         self.conv = nn.Conv2d(num_filter_in, num_filter_out, kernel_size=kernel, padding=pad, stride=stride, bias=False)
         self.hf_bn = nn.BatchNorm2d(self.conv.hf_ch_out)
         self.lf_bn = nn.BatchNorm2d(self.conv.lf_ch_out)
@@ -212,6 +222,7 @@ class Conv_BN(nn.Module):
 
 class Residual_Unit_last(nn.Module):
     def __init__(self, alpha, num_in, num_mid, num_out, first_block=False, stride=(1, 1), g=1):
+        super(Residual_Unit_last, self).__init__()
         self.conv_m1 = octConv_BN_AC(alpha=alpha, num_filter_in=num_in, num_filter_out=num_mid, kernel=(1, 1), pad=(0, 0))
         self.conv_m2 = lastOctConv_BN_AC(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_mid, kernel=(3,3), pad=(1,1), stride=stride)
         self.conv_m3 = Conv_BN(num_filter_in=num_mid, num_filter_out=num_out, kernel=(1, 1), pad=(0, 0))
@@ -231,6 +242,7 @@ class Residual_Unit_last(nn.Module):
 
 class Residual_Unit_first(nn.Module):
     def __init__(self, alpha, num_in, num_mid, num_out, first_block=False, stride=(1, 1), g=1):
+        super(Residual_Unit_first, self).__init__()
         self.conv_m1 = firstOctConv_BN_AC(alpha=alpha, num_filter_in=num_in, num_filter_out=num_mid, kernel=(1, 1), pad=(0, 0))
         self.conv_m2 = octConv_BN_AC(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_mid, kernel=(3,3), pad=(1,1), stride=stride)
         self.conv_m3 = octConv_BN(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_out, kernel=(1, 1), pad=(0, 0))
@@ -254,6 +266,7 @@ class Residual_Unit_first(nn.Module):
 
 class Residual_Unit(nn.Module):
     def __init__(self, alpha, num_in, num_mid, num_out, first_block=False, stride=(1, 1), g=1):
+        super(Residual_Unit, self).__init__()
         self.conv_m1 = octConv_BN_AC(alpha=alpha, num_filter_in=num_in, num_filter_out=num_mid, kernel=(1, 1), pad=(0, 0))
         self.conv_m2 = octConv_BN_AC(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_mid, kernel=(3,3), pad=(1,1), stride=stride)
         self.conv_m3 = octConv_BN(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_out, kernel=(1, 1), pad=(0, 0))
