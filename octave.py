@@ -5,7 +5,7 @@ class firstOctConv(nn.Module):
         super(firstOctConv, self).__init__()
         self.stride = stride
         _, alpha_out = settings
-        
+
         hf_ch_out = int(ch_out * (1 - alpha_out))
         lf_ch_out = ch_out - hf_ch_out
 
@@ -13,9 +13,9 @@ class firstOctConv(nn.Module):
         self.lf_ch_out = lf_ch_out
 
         if stride == (2, 2):
-            self.downsample = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2))
+            self.downsample = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2), ceil_mode=True)
         self.hf_conv = nn.Conv2d(ch_in, hf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
-        self.hf_pool = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2))
+        self.hf_pool = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2), ceil_mode=True)
         self.hf_pool_conv = nn.Conv2d(ch_in, lf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
 
     def forward(self, x):
@@ -40,17 +40,17 @@ class lastOctConv(nn.Module):
         self.hf_ch_out = hf_ch_out
 
         if stride == (2, 2):
-            self.downsample = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2))
-        self.hf_conv = nn.Conv2d(hf_ch_out, hf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
-        self.lf_conv = nn.Conv2d(lf_ch_in, hf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
+            self.downsample = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2), ceil_mode=True)
+        self.hf_conv = nn.Conv2d(hf_ch_in, hf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
+        # self.lf_conv = nn.Conv2d(lf_ch_in, hf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
 
     def forward(self, hf_data, lf_data):
         if self.stride== (2, 2):
             x = self.downsample(x)
 
         out_h = self.hf_conv(hf_data)
-        out_l = self.lf_conv(lf_data)
-        return out_h+out_l
+        # out_l = self.lf_conv(lf_data)
+        return out_h #+out_l
 
 class OctConv(nn.Module):
     def __init__(self, settings, ch_in, ch_out, kernel=(1,1), pad=(0,0), stride=(1,1)):
@@ -67,22 +67,21 @@ class OctConv(nn.Module):
         self.lf_ch_out = lf_ch_out
 
         if stride == (2, 2):
-            self.downsample = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2))
+            self.downsample = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2), ceil_mode=True)
         self.hf_conv = nn.Conv2d(hf_ch_in, hf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
-        self.hf_pool = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2))
+        self.hf_pool = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2), ceil_mode=True)
         self.hf_pool_conv = nn.Conv2d(hf_ch_in, lf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
 
         self.lf_conv = nn.Conv2d(lf_ch_in, hf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
         if stride == (2, 2):
-            self.lf_down = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2))
+            self.lf_down = nn.AvgPool2d(kernel_size=(2,2), stride=(2,2), ceil_mode=True)
         else:
-            self.lf_upsample = nn.Upsample(size=hf_ch_out, scale_factor=2, mode='nearest')
+            self.lf_upsample = nn.Upsample(scale_factor=2, mode='nearest')
         self.lf_down_conv = nn.Conv2d(lf_ch_in, lf_ch_out, kernel_size=kernel, stride=(1,1), padding=pad, bias=False)
 
     def forward(self, hf_data, lf_data):
-        if self.stride== (2, 2):
-            x = self.downsample(x)
-
+        if self.stride == (2, 2):
+            hf_data = self.downsample(hf_data)
         hf_conv = self.hf_conv(hf_data)
         hf_pool = self.hf_pool(hf_data)
         hf_pool_conv = self.hf_pool_conv(hf_pool)
@@ -99,7 +98,7 @@ class OctConv(nn.Module):
         out_h = hf_conv + lf_upsample
         out_l = hf_pool_conv + lf_down_conv
 
-        return out_h, out_l 
+        return out_h, out_l
 
 
 class firstOctConv_BN_AC(nn.Module):
@@ -125,8 +124,8 @@ class lastOctConv_BN_AC(nn.Module):
         self.bn = nn.BatchNorm2d(self.conv.hf_ch_out)
         self.relu = nn.ReLU(inplace=True)
 
-    def forward(self, x):
-        out = self.conv(x)
+    def forward(self, hf_data, lf_data):
+        out = self.conv(hf_data, lf_data)
         out = self.bn(out)
         out = self.relu(out)
         return out
@@ -169,8 +168,8 @@ class lastOctConv_BN(nn.Module):
         self.conv = lastOctConv(settings=(alpha, 0), ch_in=num_filter_in, ch_out=num_filter_out, kernel=kernel, pad=pad, stride=stride)
         self.bn = nn.BatchNorm2d(self.conv.hf_ch_out)
 
-    def forward(self, x):
-        out = self.conv(x)
+    def forward(self, hf_data, lf_data):
+        out = self.conv(hf_data, lf_data)
         out = self.bn(out)
         return out
 
@@ -225,16 +224,16 @@ class Residual_Unit_last(nn.Module):
         self.conv_m2 = lastOctConv_BN_AC(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_mid, kernel=(3,3), pad=(1,1), stride=stride)
         self.conv_m3 = Conv_BN(num_filter_in=num_mid, num_filter_out=num_out, kernel=(1, 1), pad=(0, 0))
         self.first_block = first_block
-        if first_block:
-            self.shortcut = lastOctConv_BN(alpha=alpha, num_filter_in=num_in, num_filter_out=num_out, kernel=(1,1), pad=(0,0), stride=stride)
+        # if first_block:
+        self.shortcut = lastOctConv_BN(alpha=alpha, num_filter_in=num_in, num_filter_out=num_out, kernel=(1,1), pad=(0,0), stride=stride)
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, hf_data, lf_data):
         hf_data_m, lf_data_m = self.conv_m1(hf_data, lf_data)
         conv_m2 = self.conv_m2(hf_data_m, lf_data_m)
         conv_m3 = self.conv_m3(conv_m2)
-        if self.first_block:
-            x = self.shortcut(hf_data, lf_data)
+        # if self.first_block:
+        x = self.shortcut(hf_data, lf_data)
         out = conv_m3 + x
         return self.relu(out)
 

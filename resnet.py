@@ -1,5 +1,5 @@
 import torch.nn as nn
-from octave import *
+from models.octave import *
 
 def conv3x3(in_planes, out_planes, stride=1, groups=1):
     """3x3 convolution with padding"""
@@ -114,28 +114,27 @@ class ResNet(nn.Module):
 
         #stage 2
         self.layer2_1 = Residual_Unit_first(alpha=alpha, num_in=64, num_mid=64, num_out=256, first_block=True, stride=(1, 1))
-        self.layer2_2 = Residual_Unit(alpha=alpha, num_in=256, num_mid=64, num_out=256, first_block=True, stride=(1, 1))
-        self.layer2_3 = Residual_Unit(alpha=alpha, num_in=256, num_mid=64, num_out=256, first_block=True, stride=(1, 1))
+        self.layer2_2 = Residual_Unit(alpha=alpha, num_in=256, num_mid=64, num_out=256, first_block=False, stride=(1, 1))
+        self.layer2_3 = Residual_Unit(alpha=alpha, num_in=256, num_mid=64, num_out=256, first_block=False, stride=(1, 1))
 
         #stage 3
         self.layer3_1 = Residual_Unit(alpha=alpha, num_in=256, num_mid=128, num_out=512, first_block=True, stride=(2, 2))
-        self.layer3_2 = Residual_Unit(alpha=alpha, num_in=512, num_mid=128, num_out=512, first_block=True, stride=(1, 1))
-        self.layer3_3 = Residual_Unit(alpha=alpha, num_in=512, num_mid=128, num_out=512, first_block=True, stride=(1, 1))
-        self.layer3_4 = Residual_Unit(alpha=alpha, num_in=512, num_mid=128, num_out=512, first_block=True, stride=(1, 1))
+        self.layer3_2 = Residual_Unit(alpha=alpha, num_in=512, num_mid=128, num_out=512, first_block=False, stride=(1, 1))
+        self.layer3_3 = Residual_Unit(alpha=alpha, num_in=512, num_mid=128, num_out=512, first_block=False, stride=(1, 1))
+        self.layer3_4 = Residual_Unit(alpha=alpha, num_in=512, num_mid=128, num_out=512, first_block=False, stride=(1, 1))
 
         #stage 4
         self.layer4_1 = Residual_Unit(alpha=alpha, num_in=512, num_mid=256, num_out=1024, first_block=True, stride=(2, 2))
-        self.layer4_2 = Residual_Unit(alpha=alpha, num_in=512, num_mid=256, num_out=1024, first_block=True, stride=(1, 1))
-        self.layer4_3 = Residual_Unit(alpha=alpha, num_in=512, num_mid=256, num_out=1024, first_block=True, stride=(1, 1))
-        self.layer4_4 = Residual_Unit(alpha=alpha, num_in=512, num_mid=256, num_out=1024, first_block=True, stride=(1, 1))
-        self.layer4_5 = Residual_Unit(alpha=alpha, num_in=512, num_mid=256, num_out=1024, first_block=True, stride=(1, 1))
-        self.layer4_6 = Residual_Unit(alpha=alpha, num_in=512, num_mid=256, num_out=1024, first_block=True, stride=(1, 1))
+        self.layer4_2 = Residual_Unit(alpha=alpha, num_in=1024, num_mid=256, num_out=1024, first_block=False, stride=(1, 1))
+        self.layer4_3 = Residual_Unit(alpha=alpha, num_in=1024, num_mid=256, num_out=1024, first_block=False, stride=(1, 1))
+        self.layer4_4 = Residual_Unit(alpha=alpha, num_in=1024, num_mid=256, num_out=1024, first_block=False, stride=(1, 1))
+        self.layer4_5 = Residual_Unit(alpha=alpha, num_in=1024, num_mid=256, num_out=1024, first_block=False, stride=(1, 1))
+        self.layer4_6 = Residual_Unit(alpha=alpha, num_in=1024, num_mid=256, num_out=1024, first_block=False, stride=(1, 1))
 
         #stage 5
         self.layer5_1 = Residual_Unit(alpha=alpha, num_in=1024, num_mid=512, num_out=2048, first_block=True, stride=(2, 2))
-        self.layer5_2 = Residual_Unit(alpha=alpha, num_in=2048, num_mid=512, num_out=2048, first_block=True, stride=(1, 1))
-        self.layer5_3 = Residual_Unit_last(alpha=alpha, num_in=2048, num_mid=512, num_out=2048, first_block=True, stride=(1, 1))
-
+        self.layer5_2 = Residual_Unit(alpha=alpha, num_in=2048, num_mid=512, num_out=2048, first_block=False, stride=(1, 1))
+        self.layer5_3 = Residual_Unit_last(alpha=alpha, num_in=2048, num_mid=512, num_out=2048, first_block=False, stride=(1, 1))
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
@@ -169,7 +168,7 @@ class ResNet(nn.Module):
 
         hf_x, lf_x = self.layer3_1(hf_x, lf_x)
         hf_x, lf_x = self.layer3_2(hf_x, lf_x)
-        hf_x, lf_x = self.layer2_3(hf_x, lf_x)
+        hf_x, lf_x = self.layer3_3(hf_x, lf_x)
         hf_x, lf_x = self.layer3_4(hf_x, lf_x)
 
         hf_x, lf_x = self.layer4_1(hf_x, lf_x)
@@ -196,7 +195,7 @@ def resnet50(pretrained=False, **kwargs):
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
     """
-    model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
+    model = ResNet(Bottleneck, [3, 4, 6, 3], 0.5, **kwargs)
     # if pretrained:
     #     model.load_state_dict(model_zoo.load_url(model_urls['resnet50']))
     return model
