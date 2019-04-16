@@ -191,14 +191,12 @@ class Conv_BN(nn.Module):
     def __init__(self, num_filter_in, num_filter_out, kernel, pad, stride=(1,1)):
         super(Conv_BN, self).__init__()
         self.conv = nn.Conv2d(num_filter_in, num_filter_out, kernel_size=kernel, padding=pad, stride=stride, bias=False)
-        self.hf_bn = nn.BatchNorm2d(self.conv.hf_ch_out)
-        self.lf_bn = nn.BatchNorm2d(self.conv.lf_ch_out)
+        self.bn = nn.BatchNorm2d(num_filter_out)
 
-    def forward(self, hf_data, lf_data):
-        hf_data, lf_data = self.conv(hf_data, lf_data)
-        out_hf = self.hf_bn(hf_data)
-        out_lf = self.hf_bn(lf_data)
-        return out_hf, out_lf
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        return x
 
 
 # class Residual_Unit_norm(nn.Module):
