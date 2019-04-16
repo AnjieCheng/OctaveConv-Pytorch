@@ -214,19 +214,62 @@ class Residual_Unit_last(nn.Module):
     def __init__(self, alpha, num_in, num_mid, num_out, first_block=False, stride=(1, 1), g=1):
         self.conv_m1 = octConv_BN_AC(alpha=alpha, num_filter_in=num_in, num_filter_out=num_mid, kernel=(1, 1), pad=(0, 0))
         self.conv_m2 = lastOctConv_BN_AC(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_mid, kernel=(3,3), pad=(1,1), stride=stride)
-        self.conv_m3 = Conv_BN(num_filter=num_out, kernel=(1, 1), pad=(0, 0))
-
+        self.conv_m3 = Conv_BN(num_filter_in=num_mid, num_filter_out=num_out, kernel=(1, 1), pad=(0, 0))
+        self.first_block = first_block
         if first_block:
-            self.shortcut = Conv_BN(num_filter=num_out, kernel=(1, 1), pad=(0, 0), stride=stride)
+            self.shortcut = lastOctConv_BN(alpha=alpha, num_filter_in=num_in, num_filter_out=num_out, kernel=(1,1), pad=(0,0), stride=stride)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, hf_data, lf_data):
+        hf_data_m, lf_data_m = self.conv_m1(hf_data, lf_data)
+        conv_m2 = self.conv_m2(hf_data_m, lf_data_m)
+        conv_m3 = self.conv_m3(conv_m2)
+        if self.first_block:
+            x = self.shortcut(hf_data, lf_data)
+        out = conv_m3 + x
+        return self.relu(out)
+
+class Residual_Unit_first(nn.Module):
+    def __init__(self, alpha, num_in, num_mid, num_out, first_block=False, stride=(1, 1), g=1):
+        self.conv_m1 = firstOctConv_BN_AC(alpha=alpha, num_filter_in=num_in, num_filter_out=num_mid, kernel=(1, 1), pad=(0, 0))
+        self.conv_m2 = octConv_BN_AC(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_mid, kernel=(3,3), pad=(1,1), stride=stride)
+        self.conv_m3 = octConv_BN(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_out, kernel=(1, 1), pad=(0, 0))
+        self.first_block = first_block
+        if first_block:
+            self.shortcut = firstOctConv_BN(alpha=alpha, num_filter_in=num_in, num_filter_out=num_out, kernel=(1,1), pad=(0,0), stride=stride)
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        out = self.conv_m1(x)
-        out = self.conv_m2(x)
-        out = self.conv_m3(x)
+        hf_data_m, lf_data_m = self.conv_m1(x)
+        hf_data_m, lf_data_m = self.conv_m2(hf_data_m, lf_data_m)
+        hf_data_m, lf_data_m = self.conv_m3(hf_data_m, lf_data_m)
+        if self.first_block:
+            hf_data, lf_data = self.shortcut(x)
+
+        hf_outputs = hf_data + hf_data_m
+        lf_outputs = lf_data + lf_data_m
+
+        return self.relu(hf_outputs), self.relu(lf_outputs)
+
+
+class Residual_Unit(nn.Module):
+    def __init__(self, alpha, num_in, num_mid, num_out, first_block=False, stride=(1, 1), g=1):
+        self.conv_m1 = octConv_BN_AC(alpha=alpha, num_filter_in=num_in, num_filter_out=num_mid, kernel=(1, 1), pad=(0, 0))
+        self.conv_m2 = octConv_BN_AC(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_mid, kernel=(3,3), pad=(1,1), stride=stride)
+        self.conv_m3 = octConv_BN(alpha=alpha, num_filter_in=num_mid, num_filter_out=num_out, kernel=(1, 1), pad=(0, 0))
+        self.first_block = first_block
         if first_block:
-            x = self.shortcut(x)
-        out = out + x
-        return self.relu(out)
+            self.shortcut = octConv_BN(alpha=alpha, num_filter_in=num_in, num_filter_out=num_out, kernel=(1,1), pad=(0,0), stride=stride)
+        self.relu = nn.ReLU(inplace=True)
 
+    def forward(self, hf_data, lf_data):
+        hf_data_m, lf_data_m = self.conv_m1(hf_data, lf_data)
+        hf_data_m, lf_data_m = self.conv_m2(hf_data_m, lf_data_m)
+        hf_data_m, lf_data_m = self.conv_m3(hf_data_m, lf_data_m)
+        if self.first_block:
+            hf_data, lf_data = self.shortcut(hf_data, lf_data)
 
+        hf_outputs = hf_data + hf_data_m
+        lf_outputs = lf_data + lf_data_m
+
+        return self.relu(hf_outputs), self.relu(lf_outputs)
