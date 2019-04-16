@@ -4,4 +4,13 @@ PyTorch implementation of [Drop an Octave: Reducing Spatial Redundancy in Convol
 
 (training in progress)
 
+### Usage
+
+```python
+from resnet import octResnet50
+...
+model = octResnet50()
+```
+
+
 from [MXNET implementation](https://github.com/terrychenism/OctaveConv)
