@@ -1,3 +1,3 @@
 # OctaveConv-Pytorch
-
-[MXNET implementation](https://github.com/terrychenism/OctaveConv)
+![Alt text](./figure/octave.png)
+from [MXNET implementation](https://github.com/terrychenism/OctaveConv)
